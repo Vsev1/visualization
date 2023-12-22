@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>PA#3</title>
+        <style>
+            body {
+                background-color: #EEEEEE;
+            }
+        </style>
+
+        <script src="./Utils/trackball-rotator.js"></script>
+        <script src="./Utils/m4.js"></script>
+        <script src="./shader.gpu"></script>
+        <script src="./main.js"></script>
+    </head>
+
+    <body onload="init()">
+
+        <h2>Parabolic Humming-Top with "Trackball" Mouse Rotation</h2>
+
+        <p id="message">Drag your mouse on the cube to rotate it.<br>
+        (On a touch screen, you can use your finger.)</p>
+
+        <label for="ambient">Ambient Component</label>
+        <input type="color" name="ambient" id="ambient" value="#330000">
+        <label for="diffuse">Diffuse Component</label>
+        <input type="color" name="diffuse" id="diffuse" value="#ff0000">
+        <label for="specular">Specular Component</label>
+        <input type="color" name="specular" id="specular" value="#ffffff">
+
+        <div id="canvas-holder">
+           <canvas width="600" height="600" id="webglcanvas" style="background-color:red"></canvas>
+        </div>
+
+    </body>
+</html>
