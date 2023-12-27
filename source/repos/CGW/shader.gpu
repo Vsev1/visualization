@@ -1,0 +1,134 @@
+
+
+// Vertex shader
+const vertexShaderSource = `
+attribute vec3 vertex;
+attribute vec3 normal;
+attribute vec2 texture;
+uniform mat4 ModelViewProjectionMatrix;
+uniform mat4 NormalMatrix;
+varying vec3 varyingVertex;
+varying vec3 varyingNormal;
+uniform bool translateLight;
+uniform vec3 lightPosition;
+uniform bool translateRelative;
+uniform vec3 relativePosition;
+uniform vec2 textureRelative;
+varying vec2 varyingTexture;
+uniform float angleOfRotation;
+
+mat4 translation(vec3 t) {
+    mat4 dst;
+
+    dst[0][0] = 1.0;
+    dst[0][ 1] = 0.0;
+    dst[0][ 2] = 0.0;
+    dst[0][ 3] = 0.0;
+    dst[1][ 0] = 0.0;
+    dst[1][ 1] = 1.0;
+    dst[1][ 2] = 0.0;
+    dst[1][ 3] = 0.0;
+    dst[2][ 0] = 0.0;
+    dst[2][ 1] = 0.0;
+    dst[2][ 2] = 1.0;
+    dst[2][ 3] = 0.0;
+    dst[3][ 0] = t.x;
+    dst[3][ 1] = t.y;
+    dst[3][ 2] = t.z;
+    dst[3][ 3] = 1.0;
+
+    return dst;
+}
+
+mat4 rotation(float angleInRadians) {
+    mat4 dst;
+    float c = cos(angleInRadians);
+    float s = sin(angleInRadians);
+
+    dst[0][0] = c;
+    dst[0][ 1] = s;
+    dst[0][ 2] = 0.0;
+    dst[0][ 3] = 0.0;
+    dst[1][ 0] = -s;
+    dst[1][ 1] = c;
+    dst[1][ 2] = 0.0;
+    dst[1][ 3] = 0.0;
+    dst[2][ 0] = 0.0;
+    dst[2][ 1] = 0.0;
+    dst[2][ 2] = 1.0;
+    dst[2][ 3] = 0.0;
+    dst[3][ 0] = 0.0;
+    dst[3][ 1] = 0.0;
+    dst[3][ 2] = 0.0;
+    dst[3][ 3] = 1.0;
+
+    return dst;
+}
+
+void main() {
+    mat4 translateToPoint = translation(vec3(-textureRelative,0.0));
+    mat4 translateToZero = translation(vec3(textureRelative,0.0));
+    mat4 rotate = rotation(angleOfRotation);
+    vec4 translated1 = translateToPoint*vec4(texture,0.0,1.0);
+    vec4 rotated = rotate*translated1;
+    vec4 translated2 = translateToZero*rotated;
+    varyingTexture = vec2(translated2.x,translated2.y);
+    varyingVertex = vertex;
+    varyingNormal = vec3(NormalMatrix * vec4(normal, 0.0));
+    gl_Position = ModelViewProjectionMatrix * vec4(vertex,1.0);
+    if(translateLight){
+        gl_Position = ModelViewProjectionMatrix * translation(lightPosition)* vec4(vertex,1.0);
+    }
+    if(translateRelative){
+        gl_Position = ModelViewProjectionMatrix * translation(relativePosition)* vec4(vertex,1.0);
+    }
+}`;
+
+
+// Fragment shader
+const fragmentShaderSource = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+   precision highp float;
+#else
+   precision mediump float;
+#endif
+
+uniform vec4 color;
+varying vec3 varyingVertex;
+varying vec3 varyingNormal;
+uniform vec3 lightPosition;
+uniform bool translateLight;
+uniform bool translateRelative;
+varying vec2 varyingTexture;
+
+uniform sampler2D tmu;
+
+uniform vec3 ambientComponent,diffuseComponent,specularComponent;
+
+void main() {
+    vec3 N = normalize(varyingNormal);
+    vec3 L = normalize(-lightPosition - varyingVertex);
+
+    // Lambert's cosine law
+    float lambertian = max(dot(N, L), 0.0);
+    float specular = 0.0;
+    if(lambertian > 0.0) {
+        vec3 R = reflect(-L, N);      // Reflected light vector
+        vec3 V = normalize(-varyingVertex); // Vector to viewer
+        // Compute the specular term
+        float specAngle = max(dot(R, V), 0.0);
+        specular = pow(specAngle, 50.0);
+    }
+    vec4 lightColor = vec4(ambientComponent +
+                      lambertian * diffuseComponent +
+                      specular * specularComponent, 1.0);
+    // gl_FragColor = vec4(1);
+    gl_FragColor = lightColor*texture2D(tmu,varyingTexture);
+
+    if(translateLight){
+        gl_FragColor = color;
+    }
+    if(translateRelative){
+        gl_FragColor = vec4(0.,0.,1.,1.);
+    }
+}`;
