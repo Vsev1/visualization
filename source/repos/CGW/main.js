@@ -402,7 +402,7 @@ function LoadTexture() {
 
     const image = new Image();
     image.crossOrigin = 'anonymous';
-    image.src = "..\\source\\repos\\CGW\\texture.jpg";
+    image.src = "https://raw.githubusercontent.com/Vsev1/visualization/CGW/source/repos/CGW/texture5.jpg";
     image.onload = () => {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(
@@ -420,6 +420,7 @@ function LoadTexture() {
 
 window.onkeydown = (e) => {
     // console.log(e.keyCode)
+    const step = 0.1;
     if (e.keyCode == 87) { //w
         textureRelative[0] = Math.min(textureRelative[0] + step, h);
     }
